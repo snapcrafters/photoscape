@@ -2,14 +2,15 @@
 set -x
 
 TITLE="Photoscape"
-INSTALL_NOTICE="Photoscape is starting, please wait a few minutes."
-START_NOTICE="Photoscape is starting, please wait a few seconds."
+INSTALL_NOTICE="Photoscape is starting, this can take a few minutes."
+START_NOTICE="Photoscape is starting, this can take a minute."
 WINE_ARGS="-SkipBuildPatchPrereq -OpenGL -no-cef-sandbox"
 
 function install_app() {
+  echo "#Installing application."
   # Install additional requirements via winetricks here
   if [ -n "${TRICKS}" ]; then
-    echo "Installing additional packages and configuring wine."
+    echo "#Installing additional packages and configuring wine."
     for TRICK in ${TRICKS}; do
       env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINETRICKS}" --gui --unattended ${TRICK}
     done
@@ -17,7 +18,7 @@ function install_app() {
 
   # Modify or remove this as required by your application.
   if [ -n "${INSTALL_URL}" ]; then
-    echo "Downloading the installer."
+    echo "#Downloading the installer."
     # Downloads a file with progress using wget and yad
     wget "${INSTALL_URL}" -O "${TMPDIR}/${INSTALL_EXE}" 2>&1 | \
     perl -p -e '$| = 1; s/^.* +([0-9]+%) +([0-9,.]+[GMKB]) +([0-9hms,.]+).*$/\1\n# Downloading... \2 (\3)/' | \
@@ -25,13 +26,13 @@ function install_app() {
   fi
 
   if [ -n "${INSTALL_PATH}" ]; then
-    echo "Copying the installer."
+    echo "#Copying the installer."
     cp ${INSTALL_PATH} "${TMPDIR}/${INSTALL_EXE}"
   fi
 
   if [ -f "${TMPDIR}/${INSTALL_EXE}" ]; then
     # Installs the wine application
-    echo "Installing the application."
+    echo "#Installing the application."
     env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${TMPDIR}/${INSTALL_EXE}" "/S" "${WINE_ARGS}"
     # Removes the cached installer
     rm -v "${TMPDIR}/${INSTALL_EXE}"
@@ -219,16 +220,21 @@ if [ ! -f "${XDG_CACHE_HOME}/winetricks/track_usage" ]; then
 fi
 
 # Launch wineboot/winecfg/winetricks if requested.
-# If the executable exists then launch it otherwise install it then lauch it.
+# Install the app if the executable doesn't exist yet.
 if [[ ${WINE_EXE} = *"winecfg"* ]] || [[ ${WINE_EXE} = *"wineboot"* ]] || [[ ${WINE_EXE} = *"winetricks"* ]]; then
   env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "$@"
-elif [ -e "${WINE_EXE}" ]; then
-  # Notification
+elif [ ! -e "${WINE_EXE}" ]; then
+  # It takes a while until the first window is shown, this is to build the font caches and such.
+  # so we create a notification to signal the user that we've indeed started.
   notify-send --icon "${SNAP}/meta/gui/photoscape.png" --expire-time=15000 "${TITLE}" "${INSTALL_NOTICE}"
+  # Using yad to get a nice GUI progress window.
+  # Each stdout line that starts with a `#` will be shown in the progress window.
+  #
+  # stdout gets duplicated to stderr so that you still see all the output when you run this
+  # script from the commandline. (yad/zenity only capture stdout)
+  install_app | tee /dev/stderr | yad --progress --width 350 --pulsate --text "Installing the application, this might take a few minutes." --title "Installing application" --auto-close
+  # Assume the installer doesn't start the application, so we start it ourselves.
+  launch_app
+else
   launch_app
 fi
-
-# Notification
-notify-send --icon "${SNAP}/meta/gui/photoscape.png" --expire-time=15000 "${TITLE}" "${START_NOTICE}"
-install_app
-
