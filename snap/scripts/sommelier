@@ -1,12 +1,14 @@
 #!/bin/bash
+set -x
 
-TITLE="Steam for Windows"
-NOTICE="This snap is experimental please visit https://github.com/Snapcrafters/steamforwindows for details."
+TITLE="Photoscape"
+NOTICE="Photoscape is starting, please wait a few minutes."
 WINE_ARGS="-SkipBuildPatchPrereq -OpenGL -no-cef-sandbox"
 
 function install_app() {
   # Install additional requirements via winetricks here
   if [ -n "${TRICKS}" ]; then
+    echo "TRICKSSSSSSSSSSSSSSSSSSSSSSSSSSSs"
     for TRICK in ${TRICKS}; do
       env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINETRICKS}" --gui --unattended ${TRICK}
     done
@@ -14,11 +16,21 @@ function install_app() {
 
   # Modify or remove this as required by your application.
   if [ -n "${INSTALL_URL}" ]; then
+    echo "DOWNLOADINGGGGGGGGGGGGGGGGGGGGGGG"
     # Downloads a file with progress using wget and yad
     wget "${INSTALL_URL}" -O "${TMPDIR}/${INSTALL_EXE}" 2>&1 | \
     perl -p -e '$| = 1; s/^.* +([0-9]+%) +([0-9,.]+[GMKB]) +([0-9hms,.]+).*$/\1\n# Downloading... \2 (\3)/' | \
     yad --progress --title="${INSTALL_EXE}" --width=400 --center --no-buttons --auto-close --auto-kill --on-top --no-escape
+  fi
+
+  if [ -n "${INSTALL_PATH}" ]; then
+    echo "COPYINGGGGGGGGGGGGGGGGGGGGGGGGGGG"
+    cp ${INSTALL_PATH} "${TMPDIR}/${INSTALL_EXE}"
+  fi
+
+  if [ -f "${TMPDIR}/${INSTALL_EXE}" ]; then
     # Installs the wine application
+    echo "INSTALLINGGGGGGGGGGGGGGGGGGGGGGGG"
     env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${TMPDIR}/${INSTALL_EXE}" "${WINE_ARGS}"
     # Removes the cached installer
     rm -v "${TMPDIR}/${INSTALL_EXE}"
@@ -69,6 +81,10 @@ fi
 # If we've been given and installer URL derive the filename
 if [ -n "${INSTALL_URL}" ]; then
   INSTALL_EXE=$(basename "${INSTALL_URL}")
+fi
+
+if [ -n "${INSTALL_PATH}" ]; then
+  INSTALL_EXE=$(basename "${INSTALL_PATH}")
 fi
 
 # On Fedora $SNAP is under /var and there is some magic to map it to /snap.
@@ -145,7 +161,8 @@ prepend_dir XDG_CONFIG_DIRS $SNAP/etc/xdg
 prepend_dir XDG_DATA_DIRS $SNAP/usr/share
 prepend_dir XDG_DATA_DIRS $SNAP_USER_COMMON
 
-export HOME=$SNAP_USER_COMMON
+# Get real home
+export HOME=`getent passwd $UID | cut -d ':' -f 6`
 
 # Set XDG_DATA_HOME to local path
 export XDG_DATA_HOME=$SNAP_USER_COMMON/.local/share
@@ -206,10 +223,10 @@ if [[ ${WINE_EXE} = *"winecfg"* ]] || [[ ${WINE_EXE} = *"wineboot"* ]] || [[ ${W
   env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "$@"
 elif [ -e "${WINE_EXE}" ]; then
   # Notification
-  notify-send --icon "${SNAP}/meta/gui/steamforwindows.png" --expire-time=15000 "${TITLE}" "${NOTICE}"
+  notify-send --icon "${SNAP}/meta/gui/photoscape.png" --expire-time=15000 "${TITLE}" "${NOTICE}"
   launch_app
 else
   # Notification
-  notify-send --icon "${SNAP}/meta/gui/steamforwindows.png" --expire-time=15000 "${TITLE}" "${NOTICE}"
+  notify-send --icon "${SNAP}/meta/gui/photoscape.png" --expire-time=15000 "${TITLE}" "${NOTICE}"
   install_app
 fi

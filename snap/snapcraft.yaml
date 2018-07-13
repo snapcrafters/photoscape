@@ -1,10 +1,8 @@
-name: steamforwindows
+name: photoscape
 version: 'latest'
-summary: Steam for Windows under WINE
+summary: photoscape
 description: |
-  This snap downloads and installs Steam for Windows in WINE on Linux.
-  First setup takes a little while to download the necessary parts.
-  Subsequent launches are faster.
+  photoscape Photo editor
 
 grade: stable
 confinement: strict
@@ -13,13 +11,14 @@ architectures:
     run-on: [amd64, i386]
 
 apps:
-  steamforwindows:
-    command: bin/sommelier "$WINEPREFIX/drive_c/Program Files/Steam/Steam.exe"
+  photoscape:
+    command: bin/sommelier "$WINEPREFIX/drive_c/Program Files/PhotoScape/PhotoScape.exe"
     environment:
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
-      DLLOVERRIDES: "mscoree,mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
-      INSTALL_URL: "http://media.steampowered.com/client/installer/SteamSetup.exe"
+      DLLOVERRIDES: "gdiplus=n,b"
+      INSTALL_PATH: "$SNAP/snap/installer/PhotoScapeSetup_V3.7.exe"
       LC_ALL: "C.UTF-8"
+      TRICKS: "fontsmooth=rgb gdiplus vcrun2008"
     plugs:
       - desktop
       - desktop-legacy
@@ -197,7 +196,7 @@ parts:
     after:
       - enable-i386
 
-  steamforwindows:
+  sommelier:
     plugin: dump
     build-attributes:
       - no-system-libraries

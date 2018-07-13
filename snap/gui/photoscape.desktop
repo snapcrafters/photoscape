@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=photoscape
+Exec=photoscape
+Icon=${SNAP}/meta/gui/photoscape.png
+Terminal=false
+StartupNotify=true
+StartupWMClass=PhotoScape.exe
