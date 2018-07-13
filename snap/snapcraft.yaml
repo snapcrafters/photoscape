@@ -2,8 +2,24 @@ name: photoscape
 version: 'latest'
 summary: photoscape
 description: |
-  photoscape Photo editor
+  PhotoScape is a fun and easy photo editing software that enables you to fix and enhance photos.
 
+  Key Features:
+
+    - Viewer: View photos in your folder, create a slideshow
+    - Editor: resizing, brightness and color adjustment, white balance, backlight correction, frames, balloons, mosaic mode, adding text, drawing pictures, cropping, filters, red eye removal, blooming, paint brush, clone stamp, effect brush
+    - Batch editor: Batch edit multiple photos
+    - Page: Merge multiple photos on the page frame to create one final photo
+    - Combine: Attach multiple photos vertically or horizontally to create one final photo
+    - Animated GIF: Use multiple photos to create a final animated photo
+    - Print: Print portrait shots, carte de visites(CDV), passport photos
+    - Splitter: Slice a photo into several pieces
+    - Screen Capture: Capture your screenshot and save it
+    - Color Picker: Zoom in on images, search and pick a color
+    - Rename: Change photo file names in batch mode
+    - Raw Converter: Convert RAW to JPG
+    - Paper Print: Print lined, graph, music and calendar paper
+    - Face Search: Find similar faces on the Internet
 grade: stable
 confinement: strict
 architectures:
@@ -15,7 +31,7 @@ apps:
     command: bin/sommelier "$WINEPREFIX/drive_c/Program Files/PhotoScape/PhotoScape.exe"
     environment:
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
-      DLLOVERRIDES: "gdiplus=n,b"
+      DLLOVERRIDES: "mscoree,mshtml=;gdiplus=n,b"
       INSTALL_PATH: "$SNAP/snap/installer/PhotoScapeSetup_V3.7.exe"
       LC_ALL: "C.UTF-8"
       TRICKS: "fontsmooth=rgb gdiplus vcrun2008"
