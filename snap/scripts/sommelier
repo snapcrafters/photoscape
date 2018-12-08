@@ -219,6 +219,9 @@ if [ ! -f "${XDG_CACHE_HOME}/winetricks/track_usage" ]; then
   echo 0 > "${XDG_CACHE_HOME}/winetricks/track_usage"
 fi
 
+# Disable winetricks version check
+export WINETRICKS_LATEST_VERSION_CHECK="disabled"
+
 # Launch wineboot/winecfg/winetricks if requested.
 # Install the app if the executable doesn't exist yet.
 if [[ ${WINE_EXE} = *"winecfg"* ]] || [[ ${WINE_EXE} = *"wineboot"* ]] || [[ ${WINE_EXE} = *"winetricks"* ]]; then
