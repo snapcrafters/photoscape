@@ -52,28 +52,15 @@ apps:
       - network-bind
       - process-control
   wineboot:
-    command: bin/sommelier $SNAP/bin/wineboot
-    plugs:
-      - desktop
-      - desktop-legacy
-      - wayland
-      - x11
+    extensions: [ gnome-3-28 ]
+    command: bin/sommelier wineboot
   winecfg:
-    command: bin/sommelier $SNAP/bin/winecfg
-    plugs:
-      - desktop
-      - desktop-legacy
-      - wayland
-      - x11
+    extensions: [ gnome-3-28 ]
+    command: bin/sommelier winecfg
   winetricks:
-    command: bin/sommelier $SNAP/bin/winetricks prefix="$WINEPREFIX"
-    plugs:
-      - desktop
-      - desktop-legacy
+    extensions: [ gnome-3-28 ]
+    command: bin/sommelier winetricks
       - network
-      - audio-playback
-      - wayland
-      - x11
 
 parts:
   installer:
@@ -100,8 +87,6 @@ parts:
   wine-runtime:
     plugin: nil
     stage-packages:
-      # - samba-libs
-      # - winbind
       ## wine
       - wine-stable:i386
       ## Required for authentication - Observed in Steam and Track Mania
@@ -146,11 +131,6 @@ parts:
       - wget               # winetricks
       - yad                # winetricks
       - x11-xserver-utils  # for xrandr to set virtual desktop
-    override-pull: |
-      snapcraftctl pull
-
-      curl --silent --show-error --location "https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks" -o winetricks
-      chmod +x winetricks
     stage:
       - -etc/init
       - -etc/init.d

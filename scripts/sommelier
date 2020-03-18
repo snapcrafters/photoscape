@@ -201,9 +201,7 @@ elif [ "$SNAP_ARCH" = "amd64" ] ; then
     export ARCH="x86_64-linux-gnu"
 fi
 
-export WINESERVER="$WINEVERPATH/bin/wineserver"
 export WINETRICKS="$SNAP/bin/winetricks"
-export WINEPATH="$WINEVERPATH/bin/winepath"
 export WINEPREFIX="$SNAP_USER_COMMON/.wine"
 
 # for dxvk installer
@@ -264,9 +262,15 @@ else
 fi
 
 # Launch wineboot/winecfg/winetricks if requested.
-# If the executable exists then launch it otherwise install it then lauch it.
-if [[ "${WINE_EXE}" = *"winecfg"* ]] || [[ "${WINE_EXE}" = *"wineboot"* ]] || [[ "${WINE_EXE}" = *"winetricks"* ]] || [[ "${WINE_EXE}" = *"winedbg"* ]] || [[ "${WINE_EXE}" = *"setup_dxvk.sh"* ]]; then
+if [[ "${WINE_EXE}" = *"winetricks"* ]]; then
+  "$WINETRICKS" prefix="$WINEPREFIX"
+elif [[ "${WINE_EXE}" = *"winecfg"* ]]; then
+  "$WINELOADER" winecfg
+elif [[ "${WINE_EXE}" = *"wineboot"* ]]; then
+  "$WINELOADER" wineboot
+elif [[ "${WINE_EXE}" = *"winedbg"* ]]; then
   "${WINE_EXE}" "${WINE_EXE_ARGS[@]}"
+# If the executable exists then launch it otherwise install it then lauch it.
 elif [ -f "$SNAP/version" ] && vercomp "$(cat "$SNAP_USER_COMMON/version" 2>/dev/null)" "$(cat "$SNAP/version" 2>/dev/null)" || [ ! -e "$WINE_EXE" ]; then
   install_app
 else
