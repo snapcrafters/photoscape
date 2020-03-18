@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="snap/gui/photoscape.png" alt="PhotoScape">
+  <img src="snap/gui/photoscape.png" alt="PhotoScape" width='256px'>
   <br />
   PhotoScape is a fun and easy photo editing software that enables you to fix and enhance photos.
 </h1>
