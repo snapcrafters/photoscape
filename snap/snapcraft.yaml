@@ -40,6 +40,7 @@ environment:
   SNAP_TITLE: "$SNAPCRAFT_PROJECT_SUMMARY"
   SNAP_ICON: "$SNAP/meta/gui/icon.png"
   SNAP_SUPPORT_URL: "https://github.com/snapcrafters/photoscape/issues"
+  FORCE_WIN32: "true"
 
 apps:
   photoscape:
