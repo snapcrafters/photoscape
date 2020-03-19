@@ -1,16 +1,16 @@
 #!/bin/bash
 
-if [ "$DEBUG_SOMMELIER" == 1 ]; then
+if [ "$DEBUG_SOMMELIER" == "1" ]; then
   set -x
 fi
 
-if [ "$SNAP_ARCH" != "i386" ] && [ "$SNAP_ARCH" != "amd64" ]; then
-  echo "Host architecture ($SNAP_ARCH) unsupported."
+if [ "$SNAP_ARCH" != "amd64" ]; then
+  echo "ERROR: Host architecture ($SNAP_ARCH) unsupported."
   exit 1
 fi
 
 [ -z "${SNAP_TITLE}" ] && SNAP_TITLE="${SNAP_NAME}"
-NOTICE="The ${SNAP_TITLE} snap is experimental, built with development releases of upstream WINE and may not function as expected."
+NOTICE="The ${SNAP_TITLE} snap uses Wine to run Windows applications and may not function as expected."
 if [ -n "$SNAP_SUPPORT_URL" ]; then
   SUPPORT_TEXT="If you encounter issues please report them on the ${SNAP_TITLE} snap issue tracker:\\n\\n${SNAP_SUPPORT_URL}"
 else
@@ -55,7 +55,7 @@ function install_app() {
   if [ -n "${TRICKS}" ]; then
     for TRICK in ${TRICKS}; do
       "${WINETRICKS}" --unattended prefix="$WINEPREFIX" "${TRICK}" | \
-      yad --progress --title="Installing ${TRICK}" --width=400 --center --no-buttons --auto-close --auto-kill --on-top --pulsate
+      yad --progress --title="Installing ${TRICK}" --progress-text= --width=400 --center --no-buttons --auto-close --auto-kill --on-top --pulsate
     done
   fi
 
@@ -86,16 +86,12 @@ function install_app() {
   if [ -f "$SNAP/version" ]; then
     cp "$SNAP/version" "$SNAP_USER_COMMON/version"
   fi
-
-  # Launch after install.
-  if [ -z "$LAUNCH_AFTER_INSTALL" ] || [ "$LAUNCH_AFTER_INSTALL" != "false" ]; then
-    launch_app
-  fi
 }
 
 function launch_app() {
   # If we don't change into the program directory some assets may not be found
-  cd "${WINE_DIR}" || exit 10
+  APP_DIR="$(dirname "${RUN_EXE}")"
+  cd "${APP_DIR}" || exit 10
 
   if [ -f "$SNAP/bin/snap-pre-start" ]; then
     . "$SNAP/bin/snap-pre-start"
@@ -109,10 +105,10 @@ function launch_app() {
     # Creating a virtual desktop the same size will eliminate bugs when
     # switching from fullscreen to windowed mode.
     NATIVE_RES="$(xrandr -q | grep primary | cut -d' ' -f4 | cut -d'+' -f1)"
-    "${WINELOADER}" explorer /desktop="virtual,${NATIVE_RES}" "${WINE_EXE}" "${WINE_EXE_ARGS[@]}" &
+    "${WINELOADER}" explorer /desktop="virtual,${NATIVE_RES}" "${RUN_EXE}" "${ACTION_ARGS[@]}" &
     WINEPID=$!
   else
-    "${WINELOADER}" "${WINE_EXE}" "${WINE_EXE_ARGS[@]}" &
+    "${WINELOADER}" "${RUN_EXE}" "${ACTION_ARGS[@]}" &
     WINEPID=$!
   fi
 
@@ -138,22 +134,6 @@ function append_dir() {
     eval "export $var=\"\${$var:+\$$var:}\$dir\""
   fi
 }
-
-# Get the executable we're being asked to launch
-if [ -n "${1}" ]; then
-  WINE_EXE="${1}"
-  if [ "$SNAP_ARCH" = "amd64" ] && [ "$FORCE_WIN32" != "true" ]; then
-    WINE_EXE="${WINE_EXE/"/Program Files/"/"/Program Files (x86)/"}"
-  fi
-
-  WINE_DIR="$(dirname "${WINE_EXE}")"
-
-  shift
-  WINE_EXE_ARGS=( "$@" )
-else
-  echo "ERROR! I need an executable that I should launch. Exiting here."
-  exit 1
-fi
 
 if [ -z "${WINEDEBUG}" ]; then
   export WINEDEBUG="-all"
@@ -187,7 +167,7 @@ elif [ -d "$SNAP/opt/wine-stable" ]; then
   WINEVERPATH="$SNAP/opt/wine-stable"
 fi
 
-if [ "$SNAP_ARCH" = "i386" ] || [ "$FORCE_WIN32" = "true" ]; then
+if [ "$FORCE_WIN32" = "true" ]; then
     export WINE="wine"
     export WINEARCH="win32"
     export WINELOADER="$WINEVERPATH/bin/wine"
@@ -201,11 +181,11 @@ elif [ "$SNAP_ARCH" = "amd64" ] ; then
     export ARCH="x86_64-linux-gnu"
 fi
 
-export WINETRICKS="$SNAP/bin/winetricks"
 export WINEPREFIX="$SNAP_USER_COMMON/.wine"
-
-# for dxvk installer
-export wine="$WINEVERPATH/bin/wine"
+export WINETRICKS="$SNAP/bin/winetricks"
+export WINETRICKS_LATEST_VERSION_CHECK="disabled"
+export wine="$WINEVERPATH/bin/wine"  # for dxvk installer
+export DXVK_CONFIG_FILE="$SNAP_USER_COMMON/dxvk.conf"
 
 append_dir PATH "$WINEVERPATH/bin"
 
@@ -232,9 +212,6 @@ if [ "$SNAP_ARCH" = "amd64" ]; then
     append_dir LD_LIBRARY_PATH "$WINEVERPATH/lib64"
 fi
 
-export DXVK_CONFIG_FILE="$SNAP_USER_COMMON/dxvk.conf"
-
-
 # Don't Stop wine from updating $WINEPREFIX automatically
 if [ -f "${WINEPREFIX}/.update-timestamp" ]; then
   chkstmp="$(grep -c disable "${WINEPREFIX}/.update-timestamp")"
@@ -245,12 +222,10 @@ if [ -f "${WINEPREFIX}/.update-timestamp" ]; then
 fi
 
 # Initialise wine
-if [ ! -f "${WINEPREFIX}/drive_c/windows/win.ini" ]; then
-  # Splash
-  # yad --timeout=90 --timeout-indicator=bottom --text="${NOTICE}" --image="${SNAP_ICON}" --no-escape --width=460 --no-buttons --splash &
+if [ ! -f "${WINEPREFIX}/drive_c/windows/system.ini" ]; then
   # Create the WINE environment
   "${WINELOADER}" wineboot --init 2>&1 | \
-  yad --progress --title="Preparing Windows environment" --width=400 --center --no-buttons --auto-close --auto-kill --pulsate
+  yad --progress --title="Preparing Windows environment" --progress-text= --width=400 --center --no-buttons --auto-close --auto-kill --pulsate
   # Opt out of winetricks metrics - we ninja this to avoid dialogs
   if [ ! -f "${XDG_CACHE_HOME}/winetricks/track_usage" ]; then
     mkdir -p "${XDG_CACHE_HOME}/winetricks"
@@ -261,18 +236,45 @@ else
   notify-send --icon "${SNAP_ICON}" --expire-time=15000 "${SNAP_TITLE}" "${NOTICE}"
 fi
 
-# Launch wineboot/winecfg/winetricks if requested.
-if [[ "${WINE_EXE}" = *"winetricks"* ]]; then
-  "$WINETRICKS" prefix="$WINEPREFIX"
-elif [[ "${WINE_EXE}" = *"winecfg"* ]]; then
-  "$WINELOADER" winecfg
-elif [[ "${WINE_EXE}" = *"wineboot"* ]]; then
-  "$WINELOADER" wineboot
-elif [[ "${WINE_EXE}" = *"winedbg"* ]]; then
-  "${WINE_EXE}" "${WINE_EXE_ARGS[@]}"
-# If the executable exists then launch it otherwise install it then lauch it.
-elif [ -f "$SNAP/version" ] && vercomp "$(cat "$SNAP_USER_COMMON/version" 2>/dev/null)" "$(cat "$SNAP/version" 2>/dev/null)" || [ ! -e "$WINE_EXE" ]; then
-  install_app
+# Get the action we're asked to run
+if [ -n "${1}" ]; then
+  ACTION="${1}"
+  shift
+  ACTION_ARGS=( "$@" )
 else
+  echo "ERROR: I need an action as first argument. Exiting here."
+  exit 1
+fi
+
+# Launch the requested program.
+if [[ "$ACTION" = "winetricks" ]]; then
+  "$WINETRICKS" prefix="$WINEPREFIX" "${ACTION_ARGS[@]}"
+elif [[ "$ACTION" = "winecfg" ]]; then
+  "$WINELOADER" winecfg "${ACTION_ARGS[@]}"
+elif [[ "$ACTION" = "wineboot" ]]; then
+  "$WINELOADER" wineboot "${ACTION_ARGS[@]}"
+elif [[ "$ACTION" = "winedbg" ]]; then
+  "$ACTION" "${ACTION_ARGS[@]}"
+elif [[ "$ACTION" = "run-exe" ]]; then
+  # Check if we know which executable to run. 
+  # Note: RUN_EXE is provided as an environment variable instead of a CLI
+  # parameter so that snaps using command-chain can specify an executable
+  # with a space in the path without having to use a wrapper script.
+  if [[ -z "$RUN_EXE" ]]; then
+    echo "ERROR: No executable provided. Please provide the path to the executable using the RUN_EXE environment variable."
+    exit 1
+  fi
+
+  # Turn relative path into an absolute path.
+  if [[ "$RUN_EXE" == "/Program Files"* ]]; then
+    RUN_EXE="${WINEPREFIX}/drive_c/${RUN_EXE}"
+  fi
+
+  # Install if the executable doesn't exist or the version changed.
+  if [ -f "$SNAP/version" ] && vercomp "$(cat "$SNAP_USER_COMMON/version" 2>/dev/null)" "$(cat "$SNAP/version" 2>/dev/null)" || [ ! -e "$RUN_EXE" ]; then
+    install_app
+  fi
+
+  # Run the application
   launch_app
 fi

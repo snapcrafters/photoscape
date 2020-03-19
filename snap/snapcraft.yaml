@@ -32,26 +32,22 @@ architectures:
 environment:
   INSTALL_EXE: "$SNAP/PhotoScapeSetup_V3.7.exe"
   INSTALL_FLAGS: "/S"
-  # TRICKS: "corefonts fontsmooth=rgb gdiplus vcrun2008"
-  TRICKS: "gdiplus_winxp"
-  WINEPREFIX: "$SNAP_USER_COMMON/.wine"
-  DLLOVERRIDES: "mscoree,mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
-  LC_ALL: "C.UTF-8"
+  DLLOVERRIDES: "mscoree,mshtml="         # Prevent pop-ups about Wine Mono and Wine Gecko
+  FORCE_WIN32: "true"
   SNAP_TITLE: "$SNAPCRAFT_PROJECT_SUMMARY"
   SNAP_ICON: "$SNAP/meta/gui/icon.png"
   SNAP_SUPPORT_URL: "https://github.com/snapcrafters/photoscape/issues"
-  FORCE_WIN32: "true"
 
 apps:
   photoscape:
     extensions: [ gnome-3-28 ]
-    command: bin/start-photoscape
+    command: bin/sommelier run-exe
+    environment:
+      RUN_EXE: "/Program Files/PhotoScape/PhotoScape.exe"
     plugs:
-      - hardware-observe
       - home
       - network
       - network-bind
-      - process-control
   wineboot:
     extensions: [ gnome-3-28 ]
     command: bin/sommelier wineboot
@@ -61,6 +57,7 @@ apps:
   winetricks:
     extensions: [ gnome-3-28 ]
     command: bin/sommelier winetricks
+    plugs:
       - network
 
 parts:
@@ -88,7 +85,6 @@ parts:
   wine-runtime:
     plugin: nil
     stage-packages:
-      ## wine
       - wine-stable:i386
       ## Required for authentication - Observed in Steam and Track Mania
       - samba-libs:i386
@@ -110,15 +106,21 @@ parts:
     after:
       - add-repos
 
+  winetricks:
+    plugin: dump
+    source: https://github.com/Winetricks/winetricks.git
+    organize:
+      'src/winetricks': bin/
+    stage:
+      - bin/winetricks
+
   sommelier:
     plugin: dump
     source: scripts
     organize:
       'snap-*': bin/
       'sommelier': bin/
-      'winetricks': bin/
-      'zenity': bin/
-      'start-photoscape': bin/
+      'zenity': bin/       # winetricks
     build-packages:
       - curl
     stage-packages:
@@ -176,6 +178,7 @@ parts:
       - installer
       - add-repos
       - wine-runtime
+      - winetricks
       - sommelier
     plugin: nil
     build-snaps:  # List all content-snaps and base snaps you're using here
