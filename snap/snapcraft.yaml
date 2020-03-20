@@ -54,6 +54,8 @@ apps:
   winecfg:
     extensions: [ gnome-3-28 ]
     command: bin/sommelier winecfg
+    plugs:
+      - home
   winetricks:
     extensions: [ gnome-3-28 ]
     command: bin/sommelier winetricks
@@ -67,10 +69,8 @@ parts:
   add-repos:
     plugin: nil
     override-build: |
-      if [ "$SNAPCRAFT_ARCH_TRIPLET" = "x86_64-linux-gnu" ]; then
-        dpkg --add-architecture i386
-        apt update
-      fi
+      dpkg --add-architecture i386
+      apt update
       wget -nc https://dl.winehq.org/wine-builds/winehq.key
       wget -nc https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/Release.key
       apt-key add winehq.key
