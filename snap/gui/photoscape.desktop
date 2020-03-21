@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
 Encoding=UTF-8
-Name=photoscape
-Exec=photoscape
+Name=Photoscape
+Exec=photoscape %F
 Icon=${SNAP}/meta/gui/photoscape.png
 Terminal=false
 StartupNotify=true
