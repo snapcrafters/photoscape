@@ -101,27 +101,11 @@ function install_app() {
 }
 
 function launch_app() {
-  # If we don't change into the program directory some assets may not be found
-  APP_DIR="$(dirname "${RUN_EXE}")"
-  cd "${APP_DIR}" || exit 10
-
   if [ -f "$SNAP/bin/snap-pre-start" ]; then
     . "$SNAP/bin/snap-pre-start"
   fi
 
-  WINEPID=
-
-  # Only use virtual desktop if it has been requested and we're running Xorg
-  if [ "${XDG_SESSION_TYPE}" == "x11" ] && [ "${VIRTDESKTOP:-}" == "1" ]; then
-    # Get the native resolution of the primary display.
-    # Creating a virtual desktop the same size will eliminate bugs when
-    # switching from fullscreen to windowed mode.
-    NATIVE_RES="$(xrandr -q | grep primary | cut -d' ' -f4 | cut -d'+' -f1)"
-    "${WINELOADER}" explorer /desktop="virtual,${NATIVE_RES}" "${RUN_EXE}" "${ACTION_ARGS[@]}" &
-    WINEPID=$!
-  else
-    "${WINELOADER}" start /wait /unix "${RUN_EXE}" "${ACTION_ARGS[@]}"
-  fi
+  "${WINELOADER}" start /wait /unix "${RUN_EXE}" "${ACTION_ARGS[@]}"
 
   if [ -f "$SNAP/bin/snap-post-stop" ]; then
     . "$SNAP/bin/snap-post-stop"
@@ -143,13 +127,6 @@ function append_dir() {
   local LIB="\$LIB"
   eval "export $var=\"\${$var:+\$$var:}\$dir\""
 }
-
-
-
-
-
-
-
 
 if [ -z "${WINEDEBUG:-}" ]; then
   export WINEDEBUG="-all"
