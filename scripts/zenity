@@ -1,6 +1,0 @@
-#!/bin/bash
-#
-# This script uses `yad` to mimic `zenity`. This is useful because `yad` has a
-# lot less dependencies than `zenity`, so using it instead reduces snap size.
-#
-exec $SNAP/usr/bin/yad "$@"

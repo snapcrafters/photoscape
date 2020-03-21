@@ -9,6 +9,15 @@ if [ "$SNAP_ARCH" != "amd64" ]; then
   exit 1
 fi
 
+# ensure_dir_exists calls `mkdir -p` if the given path is not a directory.
+# This speeds up execution time by avoiding unnecessary calls to mkdir.
+#
+# Usage: ensure_dir_exists <path> [<mkdir-options>]...
+#
+function ensure_dir_exists() {
+  [ -d "$1" ] ||  mkdir -p "$@"
+}
+
 [ -z "${SNAP_TITLE}" ] && SNAP_TITLE="${SNAP_NAME}"
 NOTICE="The ${SNAP_TITLE} snap uses Wine to run Windows applications and may not function as expected."
 if [ -n "$SNAP_SUPPORT_URL" ]; then
@@ -155,62 +164,163 @@ if [ -n "${DLLOVERRIDES}" ]; then
   export WINEDLLOVERRIDES="${DLLOVERRIDES}"
 fi
 
-if [ -x "$SNAP/bin/wine" ]; then
-  WINEVERPATH="$SNAP"
+###########################
+# Wine platform selection #
+###########################
+
+if [ -d "$SNAP/wine-platform" ]; then
+  WINE_RELEASE="$(
+      grep \
+            --extended-regexp \
+            'default-provider: *wine-platform-[[:digit:]]' \
+            $SNAP/meta/snap.yaml \
+            | cut --delimiter=: --fields=2 \
+            | sed 's/^ *//;s|-| |g' \
+            | awk '{print $4}'
+  )"
+  WINE_BASEDIR="$SNAP/wine-platform/wine-$WINE_RELEASE"
+
+  if [ ! -d "$WINE_BASEDIR" ]; then
+    platform_snap_name="$(
+        grep \
+            --extended-regexp \
+            'default-provider: *wine-platform-[[:digit:]]' \
+            $SNAP/meta/snap.yaml \
+            | cut --delimiter=: --fields=2 \
+            | sed 's/^ *//' \
+            || true
+    )"
+
+    if test -n "${platform_snap_name}"; then
+        echo "ERROR: You need to connect this snap to the wine platform snap."
+        echo ""
+        echo "You can do this with those commands:"
+        echo "snap install ${platform_snap_name}"
+        echo "snap connect $SNAP_NAME:$(echo $platform_snap_name | sed 's|-platform||g') ${platform_snap_name}"
+        echo ""
+        exit 1
+    else
+        echo "ERROR: This snap is broken. Please contact the publisher."
+        echo ""
+        echo "The snap contains a `wine-platform` folder, but no plugs to the wine platform"
+        echo "Please add the plugs to the wine platform or remove the `wine-platform` folder"
+        echo ""
+        exit 1
+    fi
+  fi
+elif [ -x "$SNAP/bin/wine" ]; then
+  WINE_BASEDIR="$SNAP"
 elif [ -x "$SNAP/usr/bin/wine" ]; then
-  WINEVERPATH="$SNAP/usr"
+  WINE_BASEDIR="$SNAP/usr"
 elif [ -d "$SNAP/opt/wine" ]; then
-  WINEVERPATH="$SNAP/opt/wine"
+  WINE_BASEDIR="$SNAP/opt/wine"
 elif [ -d "$SNAP/opt/wine-devel" ]; then
-  WINEVERPATH="$SNAP/opt/wine-devel"
+  WINE_BASEDIR="$SNAP/opt/wine-devel"
 elif [ -d "$SNAP/opt/wine-stable" ]; then
-  WINEVERPATH="$SNAP/opt/wine-stable"
+  WINE_BASEDIR="$SNAP/opt/wine-stable"
+else
+  echo "ERROR: This snap is broken. Please contact the publisher."
+  echo ""
+  echo "The snap does not contain a wine installation and is not connected to wine-platform snap."
+  echo ""
+  exit 1
 fi
 
 if [ "$FORCE_WIN32" = "true" ]; then
     export WINE="wine"
     export WINEARCH="win32"
-    export WINELOADER="$WINEVERPATH/bin/wine"
-    export WINEDLLPATH="$WINEVERPATH/lib/wine/fakedlls"
+    export WINELOADER="$WINE_BASEDIR/bin/wine"
+    export WINEDLLPATH="$WINE_BASEDIR/lib/wine/fakedlls"
     export ARCH="i386-linux-gnu"
-elif [ "$SNAP_ARCH" = "amd64" ] ; then
+else
     export WINE="wine64"
     export WINEARCH="win64"
-    export WINELOADER="$WINEVERPATH/bin/wine64"
-    export WINEDLLPATH="$WINEVERPATH/lib64/wine/fakedlls"
+    export WINELOADER="$WINE_BASEDIR/bin/wine64"
+    export WINEDLLPATH="$WINE_BASEDIR/lib64/wine/fakedlls"
     export ARCH="x86_64-linux-gnu"
 fi
 
+###########################
+# Wine runtime selection #
+###########################
+
+if [ -d $SNAP/wine-runtime ]; then
+  WINE_PLATFORM_RUNTIME=$SNAP/wine-runtime
+  if [ ! -f $WINE_PLATFORM_RUNTIME/bin/wprfile ]; then
+    runtime_snap_name="$(
+        grep \
+            --extended-regexp \
+            'default-provider: *wine-platform-runtime' \
+            $SNAP/meta/snap.yaml \
+            | cut --delimiter=: --fields=2 \
+            | sed 's/^ *//' \
+            || true
+    )"
+
+    if test -n "${runtime_snap_name}"; then
+        echo "ERROR: You need to connect this snap to the wine runtime snap."
+        echo ""
+        echo "You can do this with those commands:"
+        echo "snap install ${runtime_snap_name}"
+        echo "snap connect $SNAP_NAME:$(echo $runtime_snap_name | sed 's|-platform||g') ${runtime_snap_name}"
+        echo ""
+        exit 1
+    else
+        echo "ERROR: This snap is broken. Please contact the publisher."
+        echo ""
+        echo "The snap contains a `wine-runtime` folder, but no plugs to the wine runtime"
+        echo "Please add the plugs to the wine runtime or remove the `wine-runtime` folder"
+        echo ""
+        exit 1
+    fi
+  fi
+
+  export WINETRICKS=$WINE_PLATFORM_RUNTIME/bin/winetricks
+  export LD_LIBRARY_PATH="$WINE_PLATFORM_RUNTIME/lib:$WINE_PLATFORM_RUNTIME/lib/$ARCH:$WINE_PLATFORM_RUNTIME/usr/lib:$WINE_PLATFORM_RUNTIME/usr/lib/$ARCH:$LD_LIBRARY_PATH"
+  export PATH=$PATH:$WINE_PLATFORM_RUNTIME/bin:$WINE_PLATFORM_RUNTIME/usr/bin:$WINE_BASE/bin
+
+  append_dir LD_LIBRARY_PATH "$WINE_PLATFORM_RUNTIME/lib64"
+  append_dir LD_LIBRARY_PATH "$WINE_PLATFORM_RUNTIME/lib/i386-linux-gnu"
+  append_dir LD_LIBRARY_PATH "$WINE_PLATFORM_RUNTIME/usr/lib/i386-linux-gnu"
+  append_dir LD_LIBRARY_PATH "$WINE_PLATFORM_RUNTIME/usr/lib/x86_64-linux-gnu"
+
+
+  # SAMBA Libs for ntlm_auth to function
+  append_dir LD_LIBRARY_PATH "$WINE_PLATFORM_RUNTIME/usr/lib/$ARCH/samba"
+  append_dir LD_LIBRARY_PATH "$WINE_PLATFORM_RUNTIME/usr/lib/i386-linux-gnu/samba"
+else
+  export WINETRICKS="$SNAP/bin/winetricks"
+fi
+
 export WINEPREFIX="$SNAP_USER_COMMON/.wine"
-export WINETRICKS="$SNAP/bin/winetricks"
 export WINETRICKS_LATEST_VERSION_CHECK="disabled"
-export wine="$WINEVERPATH/bin/wine"  # for dxvk installer
+export wine="$WINE_BASEDIR/bin/wine"  # for dxvk installer
 export DXVK_CONFIG_FILE="$SNAP_USER_COMMON/dxvk.conf"
 
-append_dir PATH "$WINEVERPATH/bin"
+append_dir PATH "$WINE_BASEDIR/bin"
 
 append_dir LD_LIBRARY_PATH "$SNAP/lib"
 append_dir LD_LIBRARY_PATH "$SNAP/lib/$ARCH"
+append_dir LD_LIBRARY_PATH "$SNAP/lib/i386-linux-gnu"
 append_dir LD_LIBRARY_PATH "/lib"
 append_dir LD_LIBRARY_PATH "/lib/$ARCH"
+append_dir LD_LIBRARY_PATH "/lib/i386-linux-gnu"
 append_dir LD_LIBRARY_PATH "$SNAP/usr/lib"
 append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/$ARCH"
+append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu"
 append_dir LD_LIBRARY_PATH "/usr/lib"
 append_dir LD_LIBRARY_PATH "/usr/lib/$ARCH"
+append_dir LD_LIBRARY_PATH "/usr/lib/i386-linux-gnu"
 append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/$ARCH/samba"
+append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu/samba"
 
-if [ "$SNAP_ARCH" = "amd64" ]; then
-  append_dir LD_LIBRARY_PATH "$SNAP/lib/i386-linux-gnu"
-  append_dir LD_LIBRARY_PATH "/lib/i386-linux-gnu"
-  append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu"
-  append_dir LD_LIBRARY_PATH "/usr/lib/i386-linux-gnu"
-  append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu/samba"
-fi
+append_dir LD_LIBRARY_PATH "$WINE_BASEDIR/lib"
+append_dir LD_LIBRARY_PATH "$WINE_BASEDIR/lib64"
 
-append_dir LD_LIBRARY_PATH "$WINEVERPATH/lib"
-if [ "$SNAP_ARCH" = "amd64" ]; then
-    append_dir LD_LIBRARY_PATH "$WINEVERPATH/lib64"
-fi
+# link ttf & ttc fonts from root to wineprefix
+ensure_dir_exists $WINEPREFIX/drive_c/windows/Fonts
+find /usr/share/fonts/ -type f \( -name "*.ttf" -o -name "*.ttc" \) -exec ln -vs "{}" $WINEPREFIX/drive_c/windows/Fonts/ \; &>/dev/null
+
 
 # Don't Stop wine from updating $WINEPREFIX automatically
 if [ -f "${WINEPREFIX}/.update-timestamp" ]; then
