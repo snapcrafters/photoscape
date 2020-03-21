@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# set -e
-set -u
+if [ "${STRICT_SOMMELIER:-}" == "1" ]; then
+  # set -e
+  set -u
+fi
 
 if [ "${DEBUG_SOMMELIER:-}" == "1" ]; then
   set -x
@@ -21,9 +23,9 @@ function ensure_dir_exists() {
   [ -d "$1" ] ||  mkdir -p "$@"
 }
 
-[ -z "${SNAP_TITLE}" ] && SNAP_TITLE="${SNAP_NAME}"
+[ -z "${SNAP_TITLE:-}" ] && SNAP_TITLE="${SNAP_NAME}"
 NOTICE="The ${SNAP_TITLE} snap uses Wine to run Windows applications and may not function as expected."
-if [ -n "$SNAP_SUPPORT_URL" ]; then
+if [ -n "${SNAP_SUPPORT_URL:-}" ]; then
   SUPPORT_TEXT="If you encounter issues please report them on the ${SNAP_TITLE} snap issue tracker:\\n\\n${SNAP_SUPPORT_URL}"
 else
   SUPPORT_TEXT="If you encounter issues please report them to the snap author. You can find contact information by running \`snap info ${SNAP_NAME}\` in a terminal."
@@ -45,7 +47,7 @@ vercomp() {
     done
     for ((i=0; i<${#ver1[@]}; i++))
     do
-        if [[ -z ${ver2[i]} ]]
+        if [[ -z ${ver2[i]:-} ]]
         then
             # fill empty fields in ver2 with zeros
             ver2[i]=0
@@ -64,7 +66,7 @@ function install_app() {
   fi
 
   # Install additional requirements via winetricks here
-  if [ -n "${TRICKS}" ]; then
+  if [ -n "${TRICKS:-}" ]; then
     for TRICK in ${TRICKS}; do
       "${WINETRICKS}" --unattended prefix="$WINEPREFIX" "${TRICK}" | \
       yad --progress --title="Installing ${TRICK}" --progress-text= --width=400 --center --no-buttons --auto-close --auto-kill --on-top --pulsate
@@ -72,21 +74,21 @@ function install_app() {
   fi
 
   # Modify or remove this as required by your application.
-  if [ -n "${INSTALL_URL}" ]; then
+  if [ -n "${INSTALL_URL:-}" ]; then
     # Downloads a file with progress using wget and yad
     wget "${INSTALL_URL}" -O "${TMPDIR}/${INSTALL_EXE}" 2>&1 | \
     perl -p -e '$| = 1; s/^.* +([0-9]+%) +([0-9,.]+[GMKB]) +([0-9hms,.]+).*$/\1\n# Downloading... \2 (\3)/' | \
     yad --progress --title="${INSTALL_EXE}" --width=400 --center --no-buttons --auto-close --auto-kill --on-top --no-escape
 
     LOCAL_INSTALL_EXE="${TMPDIR}/${INSTALL_EXE}"
-  elif [ -n "${INSTALL_EXE}" ]; then
+  elif [ -n "${INSTALL_EXE:-}" ]; then
     LOCAL_INSTALL_EXE="${INSTALL_EXE}"
   fi
 
   # Installs the wine application
-  "${WINELOADER}" "${LOCAL_INSTALL_EXE}" "${INSTALL_FLAGS}"
+  "${WINELOADER}" "${LOCAL_INSTALL_EXE}" "${INSTALL_FLAGS:-}"
 
-  if [ -n "${INSTALL_URL}" ]; then
+  if [ -n "${INSTALL_URL:-}" ]; then
     # Removes the cached installer
     rm -v "${TMPDIR}/${INSTALL_EXE}"
   fi
@@ -176,7 +178,7 @@ if [ -d "$SNAP/wine-platform" ]; then
             || true
     )"
 
-    if test -n "${platform_snap_name}"; then
+    if test -n "${platform_snap_name:-}"; then
         echo "ERROR: You need to connect this snap to the wine platform snap."
         echo ""
         echo "You can do this with those commands:"

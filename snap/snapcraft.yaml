@@ -37,6 +37,7 @@ environment:
   SNAP_TITLE: "$SNAPCRAFT_PROJECT_SUMMARY"
   SNAP_ICON: "$SNAP/meta/gui/icon.png"
   SNAP_SUPPORT_URL: "https://github.com/snapcrafters/photoscape/issues"
+  STRICT_SOMMELIER: "1"  # Make Sommelier exit when unset variable is used. (useful to find bugs)
 
 apps:
   photoscape:
