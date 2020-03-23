@@ -1,5 +1,5 @@
 name: photoscape
-title: Photoscape
+title: PhotoScape
 version: "3.7"
 summary: PhotoScape is a fun and easy photo editing software to fix and enhance photos.
 description: |
@@ -49,14 +49,12 @@ apps:
       - home
       - network
       - network-bind
-  wineboot:
+  wine64:
     extensions: [ gnome-3-28 ]
-    command: bin/sommelier wineboot
-  winecfg:
-    extensions: [ gnome-3-28 ]
-    command: bin/sommelier winecfg
+    command: bin/sommelier
     plugs:
       - home
+      - network
   winetricks:
     extensions: [ gnome-3-28 ]
     command: bin/sommelier winetricks
@@ -75,12 +73,19 @@ parts:
       'snap-*': bin/
       'sommelier': bin/
 
+  themes:
+    plugin: dump
+    source: themes
+    organize:
+      '*': themes/
+
   wine-platform:
     plugin: nil
     override-build: |
       snapcraftctl build
       mkdir $SNAPCRAFT_PART_INSTALL/wine-runtime
       mkdir $SNAPCRAFT_PART_INSTALL/wine-platform
+
   # This part removes all the files in this snap which already exist in
   # connected content and base snaps. Since these files will be available
   # at runtime from the content and base snaps, they do not need to be
