@@ -109,11 +109,13 @@ function launch_app() {
 
   "${WINELOADER}" start /wait /unix "${RUN_EXE}" "${ACTION_ARGS[@]}"
 
+  local exit_code="$?"
+
   if [ -f "$SNAP/bin/snap-post-stop" ]; then
     . "$SNAP/bin/snap-post-stop"
   fi
 
-  exit $?
+  exit $exit_code
 }
 
 function prepend_dir() {
