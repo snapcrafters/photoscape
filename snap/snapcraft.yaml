@@ -109,11 +109,11 @@ parts:
       done
 
 plugs:
-  wine-platform-runtime:
+  wine-runtime:
     interface: content
     target: $SNAP/wine-runtime
     default-provider: wine-platform-runtime
-  wine-platform-4-stable:
+  wine-4-stable:
     interface: content
     target: $SNAP/wine-platform
     default-provider: wine-platform-4-stable
