@@ -21,6 +21,8 @@ description: |
     - Raw Converter: Convert RAW to JPG
     - Paper Print: Print lined, graph, music and calendar paper
     - Face Search: Find similar faces on the Internet
+
+  Note: This snap uses Wine to run the Windows version of PhotoScape on Linux.
 grade: stable
 
 base: core18
@@ -33,7 +35,6 @@ environment:
   INSTALL_EXE: "$SNAP/PhotoScapeSetup_V3.7.exe"
   INSTALL_FLAGS: "/S"
   DLLOVERRIDES: "mscoree,mshtml="         # Prevent pop-ups about Wine Mono and Wine Gecko
-  # FORCE_WIN32: "true"
   SNAP_TITLE: "$SNAPCRAFT_PROJECT_SUMMARY"
   SNAP_ICON: "$SNAP/meta/gui/icon.png"
   SNAP_SUPPORT_URL: "https://github.com/snapcrafters/photoscape/issues"
@@ -49,12 +50,19 @@ apps:
       - home
       - network
       - network-bind
+  # The wine64 command can be used to run applications inside the wine
+  # environment that this snap uses.
+  #
+  # For example, users can configure the wine environment of this snap
+  # by running `myapp.wine64 winecfg`.
   wine64:
     extensions: [ gnome-3-28 ]
     command: bin/sommelier
     plugs:
       - home
       - network
+  # The winetricks command can be used to run winetricks inside the wine
+  # environment that this snap uses.
   winetricks:
     extensions: [ gnome-3-28 ]
     command: bin/sommelier winetricks
@@ -66,25 +74,16 @@ parts:
     plugin: dump
     source: installer
 
+  # The sommelier script helps you snap Windows applications using Wine. It 
+  # initialises and configures Wine and installs the Windows application.
+  #
+  # This part is copied straight from the sommelier-core repository. Please
+  # periodically check the source for updates and copy the changes.
+  #    https://github.com/snapcrafters/sommelier-core
+  #
   sommelier:
-    plugin: dump
-    source: scripts
-    organize:
-      'snap-*': bin/
-      'sommelier': bin/
-
-  themes:
-    plugin: dump
-    source: themes
-    organize:
-      '*': themes/
-
-  wine-platform:
-    plugin: nil
-    override-build: |
-      snapcraftctl build
-      mkdir $SNAPCRAFT_PART_INSTALL/wine-runtime
-      mkdir $SNAPCRAFT_PART_INSTALL/wine-platform
+    plugin: make
+    source: https://github.com/snapcrafters/sommelier-core.git
 
   # This part removes all the files in this snap which already exist in
   # connected content and base snaps. Since these files will be available
@@ -97,7 +96,6 @@ parts:
     after:  # Make this part run last; list all your other parts here
       - installer
       - sommelier
-      - wine-platform
     plugin: nil
     build-snaps:  # List all content-snaps and base snaps you're using here
       - core18
@@ -108,6 +106,12 @@ parts:
         cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
       done
 
+# These plugs are used to connect the snap to the wine runtime.
+#
+# These plugs are copied straight from the sommelier-core repository. Please
+# periodically check the source for updates and copy the changes.
+#    https://github.com/snapcrafters/sommelier-core
+#
 plugs:
   wine-runtime:
     interface: content
