@@ -32,8 +32,6 @@ architectures:
   - build-on: amd64
 
 environment:
-  INSTALL_EXE: "$SNAP/PhotoScapeSetup_V3.7.exe"
-  INSTALL_FLAGS: "/S"
   WINEDLLOVERRIDES: "mscoree,mshtml="         # Prevent pop-ups about Wine Mono and Wine Gecko
   SNAP_SOMMELIER_STRICT: "1"                  # Make Sommelier exit when unset variable is used. (useful to find bugs)
 
@@ -43,6 +41,8 @@ apps:
     command: bin/sommelier run-exe
     environment:
       RUN_EXE: "/Program Files (x86)/PhotoScape/PhotoScape.exe"
+      INSTALL_EXE: "$SNAP/PhotoScapeSetup_V3.7.exe"
+      INSTALL_FLAGS: "/S"
     plugs:
       - home
       - network
