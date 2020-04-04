@@ -34,11 +34,8 @@ architectures:
 environment:
   INSTALL_EXE: "$SNAP/PhotoScapeSetup_V3.7.exe"
   INSTALL_FLAGS: "/S"
-  DLLOVERRIDES: "mscoree,mshtml="         # Prevent pop-ups about Wine Mono and Wine Gecko
-  SNAP_TITLE: "$SNAPCRAFT_PROJECT_SUMMARY"
-  SNAP_ICON: "$SNAP/meta/gui/icon.png"
-  SNAP_SUPPORT_URL: "https://github.com/snapcrafters/photoscape/issues"
-  STRICT_SOMMELIER: "1"  # Make Sommelier exit when unset variable is used. (useful to find bugs)
+  WINEDLLOVERRIDES: "mscoree,mshtml="         # Prevent pop-ups about Wine Mono and Wine Gecko
+  SNAP_SOMMELIER_STRICT: "1"                  # Make Sommelier exit when unset variable is used. (useful to find bugs)
 
 apps:
   photoscape:
