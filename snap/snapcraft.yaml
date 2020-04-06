@@ -47,12 +47,12 @@ apps:
       - home
       - network
       - network-bind
-  # The wine64 command can be used to run applications inside the wine
+  # The wine command can be used to run applications inside the wine
   # environment that this snap uses.
   #
   # For example, users can configure the wine environment of this snap
-  # by running `myapp.wine64 winecfg`.
-  wine64:
+  # by running `myapp.wine winecfg`.
+  wine:
     extensions: [ gnome-3-28 ]
     command: bin/sommelier
     plugs:
