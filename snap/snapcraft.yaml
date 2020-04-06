@@ -82,27 +82,6 @@ parts:
     plugin: make
     source: https://github.com/snapcrafters/sommelier-core.git
 
-  # This part removes all the files in this snap which already exist in
-  # connected content and base snaps. Since these files will be available
-  # at runtime from the content and base snaps, they do not need to be
-  # included in this snap itself.
-  #
-  # More info: https://snapcraft-utils-library.readthedocs.io/en/latest/lib/cleanup.html 
-  #
-  cleanup:
-    after:  # Make this part run last; list all your other parts here
-      - installer
-      - sommelier
-    plugin: nil
-    build-snaps:  # List all content-snaps and base snaps you're using here
-      - core18
-      - gnome-3-28-1804
-    override-prime: |
-      set -eux
-      for snap in "core18" "gnome-3-28-1804"; do  # List all content-snaps and base snaps you're using here
-        cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
-      done
-
 # These plugs are used to connect the snap to the wine runtime.
 #
 # These plugs are copied straight from the sommelier-core repository. Please
