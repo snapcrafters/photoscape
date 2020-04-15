@@ -93,7 +93,7 @@ plugs:
     interface: content
     target: $SNAP/wine-runtime
     default-provider: wine-platform-runtime
-  wine-4-stable:
+  wine-5-stable:
     interface: content
     target: $SNAP/wine-platform
-    default-provider: wine-platform-4-stable
+    default-provider: wine-platform-5-stable
