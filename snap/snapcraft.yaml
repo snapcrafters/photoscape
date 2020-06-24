@@ -32,8 +32,8 @@ architectures:
   - build-on: amd64
 
 environment:
-  WINEDLLOVERRIDES: "mscoree,mshtml="         # Prevent pop-ups about Wine Mono and Wine Gecko
-  SNAP_SOMMELIER_STRICT: "1"                  # Make Sommelier exit when unset variable is used. (useful to find bugs)
+  WINEDLLOVERRIDES: "$WINEDLLOVERRIDES;mscoree,mshtml="    # Prevent pop-ups about Wine Mono and Wine Gecko
+  SNAP_SOMMELIER_STRICT: "1"                               # Make Sommelier exit when unset variable is used. (useful to find bugs)
 
 apps:
   photoscape:
