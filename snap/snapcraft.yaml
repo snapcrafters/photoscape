@@ -40,7 +40,7 @@ apps:
     extensions: [ gnome-3-28 ]
     command: bin/sommelier run-exe
     environment:
-      RUN_EXE: "/Program Files (x86)/PhotoScape/PhotoScape.exe"
+      RUN_EXE: "C:/Program Files (x86)/PhotoScape/PhotoScape.exe"
       INSTALL_EXE: "$SNAP/PhotoScapeSetup_V3.7.exe"
       INSTALL_FLAGS: "/S"
     plugs:
