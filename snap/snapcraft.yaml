@@ -22,7 +22,7 @@ description: |
   - Paper Print: Print lined, graph, music and calendar paper
   - Face Search: Find similar faces on the Internet
 
-  Note: This snap uses Wine to run the Windows version of PhotoScape on Linux.
+  *Note: This Windows application runs on Linux using the Wine compatibility layer.*
 grade: stable
 
 base: core18
@@ -33,7 +33,7 @@ architectures:
 
 environment:
   WINEDLLOVERRIDES: "$WINEDLLOVERRIDES;mscoree,mshtml="    # Prevent pop-ups about Wine Mono and Wine Gecko
-  SNAP_SOMMELIER_STRICT: "1"                               # Make Sommelier exit when unset variable is used. (useful to find bugs)
+  SOMMELIER_STRICT: "1"                                    # Make Sommelier exit when unset variable is used. (useful to find bugs in sommelier)
 
 apps:
   photoscape:
@@ -72,22 +72,12 @@ parts:
     source: installer
 
   # The sommelier script helps you snap Windows applications using Wine. It 
-  # initialises and configures Wine and installs the Windows application.
-  #
-  # This part is copied straight from the sommelier-core repository. Please
-  # periodically check the source for updates and copy the changes.
-  #    https://github.com/snapcrafters/sommelier-core
-  #
+  # initializes and configures Wine and installs the Windows application.
   sommelier:
     plugin: make
     source: https://github.com/snapcrafters/sommelier-core.git
 
 # These plugs are used to connect the snap to the wine runtime.
-#
-# These plugs are copied straight from the sommelier-core repository. Please
-# periodically check the source for updates and copy the changes.
-#    https://github.com/snapcrafters/sommelier-core
-#
 plugs:
   wine-runtime:
     interface: content

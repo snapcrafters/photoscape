@@ -1,25 +1,16 @@
-<h1 align="center">
-  <img src="snap/gui/photoscape.png" alt="PhotoScape" width='256px'>
-  <br />
-  PhotoScape is a fun and easy photo editing software that enables you to fix and enhance photos.
-</h1>
+# PhotoScape Snap
 
-<p align="center"><b>This is the snap for PhotoScape</b>. It works on
-Ubuntu, Fedora, Debian, and other major Linux distributions.<b>This snap is
-experimental, built with development releases of upstream WINE and may not
-function as expected. If you encounter issues please report them is this
-GitHub project.</b></p>
+This is the snap for [PhotoScape](http://www.photoscape.org/ps/main/index.php). It works on Ubuntu, Fedora, Debian, and other major Linux distributions.
 
-<p align="center">Published for <img src="http://anything.codes/slack-emoji-for-techies/emoji/tux.png" align="top" width="24" /> with :gift_heart: by Snapcrafters</p>
+This Windows application runs on Linux using the Wine compatibility layer. For that reason, it may not function as expected. If you encounter issues please report in the issue tracker of this repository.
 
-<!-- <p align="center">
-<a href="https://build.snapcraft.io/user/snapcrafters/steamforwindows"><img src="https://build.snapcraft.io/badge/snapcrafters/steamforwindows.svg" alt="Snap Status"></a>
-</p> -->
+*Published for <img src="http://anything.codes/slack-emoji-for-techies/emoji/tux.png" align="top" width="24" /> with :gift_heart: by Snapcrafters*
 
 ## Install
 
-    snap install photoscape
-    snap connect photoscape:removable-media
+```shell
+snap install photoscape
+```
 
 ([Don't have snapd installed?](https://snapcraft.io/docs/core/install))
 
@@ -27,4 +18,10 @@ GitHub project.</b></p>
 
 ## Reusing this snap
 
-This snap is built from the "steamforwindows" snap. Look at the repo for instructions on how to snap your own Windows application: <https://github.com/snapcrafters/steamforwindows>.
+You can use this snap as a reference for creating snaps of other Windows applications. See the [sommelier-core](https://github.com/snapcrafters/sommelier-core) repo for more information on how to snap a Windows application.
+
+If you have any questions about creating snaps of Windows applications then [post in the Snapcraft forum](https://forum.snapcraft.io).
+
+## License
+
+This snap manifest is released under the GPLv2 license. PhotoScape itself is a proprietary application owned by MOOII TECH.
