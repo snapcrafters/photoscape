@@ -76,6 +76,7 @@ parts:
   sommelier:
     plugin: make
     source: https://github.com/snapcrafters/sommelier-core.git
+    source-branch: bindtextdomain
 
 # These plugs are used to connect the snap to the wine runtime.
 plugs:
