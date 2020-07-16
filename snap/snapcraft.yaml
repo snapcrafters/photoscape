@@ -24,6 +24,7 @@ description: |
 
   *Note: This Windows application runs on Linux using the Wine compatibility layer.*
 grade: stable
+icon: snap/gui/photoscape.png
 
 base: core18
 confinement: strict
