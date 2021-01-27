@@ -2,6 +2,7 @@
 Type=Application
 Encoding=UTF-8
 Name=PhotoScape
+Categories=Graphics
 Exec=photoscape %F
 Icon=${SNAP}/meta/gui/photoscape.png
 Terminal=false
