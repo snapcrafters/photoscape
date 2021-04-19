@@ -50,6 +50,7 @@ apps:
       - network
       - network-bind
       - removable-media
+      - cups-control
   # The wine command can be used to run applications inside the wine
   # environment that this snap uses.
   #
@@ -63,7 +64,8 @@ apps:
       - network
       - network-bind
       - removable-media
-  # The winetricks command can be used to run winetricks inside the wine
+      - cups-control
+ # The winetricks command can be used to run winetricks inside the wine
   # environment that this snap uses.
   winetricks:
     extensions: [ gnome-3-28 ]
