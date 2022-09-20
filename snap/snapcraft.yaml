@@ -50,7 +50,6 @@ apps:
       - network
       - network-bind
       - removable-media
-      - cups-control
       - cups
   # The wine command can be used to run applications inside the wine
   # environment that this snap uses.
@@ -65,7 +64,6 @@ apps:
       - network
       - network-bind
       - removable-media
-      - cups-control
       - cups
  # The winetricks command can be used to run winetricks inside the wine
   # environment that this snap uses.
